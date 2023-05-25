@@ -1,118 +1,215 @@
-import Image from 'next/image'
-import { Inter } from 'next/font/google'
+import React, { useState } from 'react';
+import Navigation from './/Navigation';
+import { useTable } from 'react-table';
+import { saveAs } from 'file-saver';
+import XLSX from 'xlsx';
 
-const inter = Inter({ subsets: ['latin'] })
+const App = () => {
+  const [income, setIncome] = useState(0);
+  const [expenses, setExpenses] = useState([]);
+  const [expenseLabels, setExpenseLabels] = useState([]);
 
-export default function Home() {
+  // Handle income change
+  const handleIncomeChange = (e) => {
+    setIncome(parseFloat(e.target.value));
+  };
+
+  // Handle expense label change
+  const handleExpenseLabelChange = (e, index) => {
+    const updatedExpenseLabels = [...expenseLabels];
+    updatedExpenseLabels[index] = e.target.value;
+    setExpenseLabels(updatedExpenseLabels);
+  };
+
+  // Handle expense change
+  const handleExpenseChange = (e, index) => {
+    const updatedExpenses = [...expenses];
+    updatedExpenses[index] = parseFloat(e.target.value);
+    setExpenses(updatedExpenses);
+  };
+
+  // Handle adding a new expense
+  const handleAddExpense = () => {
+    setExpenses([...expenses, 0]);
+    setExpenseLabels([...expenseLabels, '']);
+  };
+
+  // Handle removing an expense
+  const handleRemoveExpense = (index) => {
+    const updatedExpenses = [...expenses];
+    updatedExpenses.splice(index, 1);
+    setExpenses(updatedExpenses);
+
+    const updatedExpenseLabels = [...expenseLabels];
+    updatedExpenseLabels.splice(index, 1);
+    setExpenseLabels(updatedExpenseLabels);
+  };
+
+  // Calculate total expenses
+  const totalExpenses = expenses.reduce((acc, expense) => acc + expense, 0);
+
+  // Calculate balance
+  const balance = income - totalExpenses;
+
+  // Prepare data for the table
+  const tableData = expenses.map((expense, index) => ({
+    label: expenseLabels[index],
+    expense: expense.toFixed(2),
+  }));
+
+  // Prepare columns for the table
+  const tableColumns = React.useMemo(
+    () => [
+      {
+        Header: 'Expense',
+        accessor: 'label',
+      },
+      {
+        Header: 'Amount',
+        accessor: 'expense',
+      },
+    ],
+    []
+  );
+
+  // Create an instance of the table
+  const {
+    getTableProps,
+    getTableBodyProps,
+    headerGroups,
+    rows,
+    prepareRow,
+  } = useTable({
+    columns: tableColumns,
+    data: tableData,
+  });
+
+  // Handle export to Excel
+  const exportToExcel = () => {
+    const workbook = XLSX.utils.book_new();
+    const worksheet = XLSX.utils.json_to_sheet(tableData);
+    XLSX.utils.book_append_sheet(workbook, worksheet, 'Expenses');
+    const excelBuffer = XLSX.write(workbook, {
+      bookType: 'xlsx',
+      type: 'array',
+    });
+    const excelData = new Blob([excelBuffer], {
+      type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet;charset=UTF-8',
+    });
+    saveAs(excelData, 'expenses.xlsx');
+  };
+
   return (
-    <main
-      className={`flex min-h-screen flex-col items-center justify-between p-24 ${inter.className}`}
-    >
-      <div className="z-10 w-full max-w-5xl items-center justify-between font-mono text-sm lg:flex">
-        <p className="fixed left-0 top-0 flex w-full justify-center border-b border-gray-300 bg-gradient-to-b from-zinc-200 pb-6 pt-8 backdrop-blur-2xl dark:border-neutral-800 dark:bg-zinc-800/30 dark:from-inherit lg:static lg:w-auto lg:rounded-xl lg:border lg:bg-gray-200 lg:p-4 lg:dark:bg-zinc-800/30">
-          Get started by editing&nbsp;
-          <code className="font-mono font-bold">src/pages/index.js</code>
-        </p>
-        <div className="fixed bottom-0 left-0 flex h-48 w-full items-end justify-center bg-gradient-to-t from-white via-white dark:from-black dark:via-black lg:static lg:h-auto lg:w-auto lg:bg-none">
-          <a
-            className="pointer-events-none flex place-items-center gap-2 p-8 lg:pointer-events-auto lg:p-0"
-            href="https://vercel.com?utm_source=create-next-app&utm_medium=default-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            By{' '}
-            <Image
-              src="/vercel.svg"
-              alt="Vercel Logo"
-              className="dark:invert"
-              width={100}
-              height={24}
-              priority
-            />
-          </a>
-        </div>
+    <div className="container mx-auto">
+      <header className="flex justify-between items-center py-4">
+        <h1 className="text-2xl font-bold">Personal Finance App</h1>
+        <Navigation />
+      </header>
+
+      <main>
+        <section className="py-12 ">
+          <div className="max-w-3xl mx-auto px-4">
+            <h2 className="text-3xl font-bold mb-4">Take Control of Your Finances</h2>
+            <p className="text-lg mb-8">
+            Managing your personal finances is essential for achieving financial stability and reaching your goals. Our Personal Finance App empowers you to track your income, monitor your expenses, and make informed financial decisions.
+
+With our user-friendly budget calculator, you can easily input your income and expenses, categorize your spending, and see a clear breakdown of your finances. Gain insights into where your money is going and identify areas where you can save.
+
+Our app provides you with dynamic tables and graphs to visualize your financial progress over time.</p>
+
+<p className="text-lg mb-8">Track your income, expenses, and savings with ease, enabling you to make adjustments and improve your financial situation.
+
+Additionally, we offer a comprehensive collection of educational videos that cover a wide range of personal finance topics. From budgeting and saving to investing and retirement planning, our videos provide valuable knowledge to help you make informed financial decisions.
+
+Take the first step towards financial success by using our Personal Finance App. Start managing your money effectively and pave the way for a secure and prosperous future.
+            </p>
+
+            {/* Add more information about the app */}
+          </div>
+        </section>
+
+
+        <section className="bg-white shadow rounded-lg p-6 mb-6">
+  <h2 className="text-2xl font-bold mb-4 text-center">Check Out Our Website Video</h2>
+  <div className="flex justify-center">
+  <div className="relative border-5 border-03045E rounded-lg">
+    <iframe
+      height= "675px"
+      width= "1200px"
+      className="aspect-object inset-0"
+      src="https://www.youtube.com/embed/gngcn6_qqkM"
+      title="Website Video"
+      allowFullScreen
+    ></iframe>
+  </div>
+  </div>
+  <div className="mt-8"></div>
+  <p className="text-gray-800">
+    Lorem ipsum dolor sit amet, consectetur adipiscing elit. Mauris ac dui lectus. Nam ullamcorper pellentesque dolor id congue. Sed sed risus quis tellus cursus scelerisque. Suspendisse potenti. Ut fermentum erat ligula, ut lobortis turpis vestibulum a. Fusce nec placerat justo, in ultricies nisi. Integer in neque consectetur, faucibus mi id, consequat ex.
+  </p>
+  <p className="text-gray-800">
+    Morbi tincidunt convallis purus, sed egestas dui mollis sed. Sed eleifend arcu sed leo placerat, nec convallis leo tempor. Donec luctus, ex at sagittis tempus, ipsum odio gravida mi, nec iaculis erat est at mi. Fusce bibendum posuere purus ut facilisis. Aenean sodales urna purus, non aliquam massa blandit eu. Suspendisse potenti. Curabitur efficitur placerat lobortis. 
+  </p>
+  <p className="text-gray-800">
+    Phasellus eu arcu in nibh tristique blandit. Sed in lobortis tellus, et mattis nunc. Vivamus vitae ipsum ut risus interdum rhoncus a sit amet felis. Quisque vestibulum feugiat convallis. Sed blandit nisi eget feugiat sollicitudin. Sed nec dignissim lorem. Suspendisse faucibus congue leo, non commodo lorem efficitur vel.
+  </p>
+  
+</section>
+
+<section className="bg-white shadow rounded-lg p-6 mb-6">
+  <h2 className="text-2xl font-bold mb-4 text-center">Testimonials</h2>
+  <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+    <div className="bg-white rounded-lg shadow p-4">
+      <div className="flex items-center mb-2">
+        <span className="text-yellow-400 text-2xl mr-1">⭐</span>
+        <span className="text-yellow-400 text-2xl mr-1">⭐</span>
+        <span className="text-yellow-400 text-2xl mr-1">⭐</span>
+        <span className="text-yellow-400 text-2xl mr-1">⭐</span>
+        <span className="text-yellow-400 text-2xl mr-1">⭐</span>
       </div>
-
-      <div className="relative flex place-items-center before:absolute before:h-[300px] before:w-[480px] before:-translate-x-1/2 before:rounded-full before:bg-gradient-radial before:from-white before:to-transparent before:blur-2xl before:content-[''] after:absolute after:-z-20 after:h-[180px] after:w-[240px] after:translate-x-1/3 after:bg-gradient-conic after:from-sky-200 after:via-blue-200 after:blur-2xl after:content-[''] before:dark:bg-gradient-to-br before:dark:from-transparent before:dark:to-blue-700/10 after:dark:from-sky-900 after:dark:via-[#0141ff]/40 before:lg:h-[360px]">
-        <Image
-          className="relative dark:drop-shadow-[0_0_0.3rem_#ffffff70] dark:invert"
-          src="/next.svg"
-          alt="Next.js Logo"
-          width={180}
-          height={37}
-          priority
-        />
+      <p>Lorem ipsum dolor sit amet consectetur adipisicing elit. Quisquam, nulla!</p>
+      <p>-Person</p>
+    </div>
+    <div className="bg-white rounded-lg shadow p-4">
+      <div className="flex items-center mb-2">
+        <span className="text-yellow-400 text-2xl mr-1">⭐</span>
+        <span className="text-yellow-400 text-2xl mr-1">⭐</span>
+        <span className="text-yellow-400 text-2xl mr-1">⭐</span>
+        <span className="text-yellow-400 text-2xl mr-1">⭐</span>
+        <span className="text-yellow-400 text-2xl mr-1">⭐</span>
       </div>
-
-      <div className="mb-32 grid text-center lg:mb-0 lg:grid-cols-4 lg:text-left">
-        <a
-          href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=default-template-tw&utm_campaign=create-next-app"
-          className="group rounded-lg border border-transparent px-5 py-4 transition-colors hover:border-gray-300 hover:bg-gray-100 hover:dark:border-neutral-700 hover:dark:bg-neutral-800/30"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <h2 className={`mb-3 text-2xl font-semibold`}>
-            Docs{' '}
-            <span className="inline-block transition-transform group-hover:translate-x-1 motion-reduce:transform-none">
-              -&gt;
-            </span>
-          </h2>
-          <p className={`m-0 max-w-[30ch] text-sm opacity-50`}>
-            Find in-depth information about Next.js features and API.
-          </p>
-        </a>
-
-        <a
-          href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=default-template-tw&utm_campaign=create-next-app"
-          className="group rounded-lg border border-transparent px-5 py-4 transition-colors hover:border-gray-300 hover:bg-gray-100 hover:dark:border-neutral-700 hover:dark:bg-neutral-800/30"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <h2 className={`mb-3 text-2xl font-semibold`}>
-            Learn{' '}
-            <span className="inline-block transition-transform group-hover:translate-x-1 motion-reduce:transform-none">
-              -&gt;
-            </span>
-          </h2>
-          <p className={`m-0 max-w-[30ch] text-sm opacity-50`}>
-            Learn about Next.js in an interactive course with&nbsp;quizzes!
-          </p>
-        </a>
-
-        <a
-          href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=default-template-tw&utm_campaign=create-next-app"
-          className="group rounded-lg border border-transparent px-5 py-4 transition-colors hover:border-gray-300 hover:bg-gray-100 hover:dark:border-neutral-700 hover:dark:bg-neutral-800/30"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <h2 className={`mb-3 text-2xl font-semibold`}>
-            Templates{' '}
-            <span className="inline-block transition-transform group-hover:translate-x-1 motion-reduce:transform-none">
-              -&gt;
-            </span>
-          </h2>
-          <p className={`m-0 max-w-[30ch] text-sm opacity-50`}>
-            Discover and deploy boilerplate example Next.js&nbsp;projects.
-          </p>
-        </a>
-
-        <a
-          href="https://vercel.com/new?utm_source=create-next-app&utm_medium=default-template-tw&utm_campaign=create-next-app"
-          className="group rounded-lg border border-transparent px-5 py-4 transition-colors hover:border-gray-300 hover:bg-gray-100 hover:dark:border-neutral-700 hover:dark:bg-neutral-800/30"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <h2 className={`mb-3 text-2xl font-semibold`}>
-            Deploy{' '}
-            <span className="inline-block transition-transform group-hover:translate-x-1 motion-reduce:transform-none">
-              -&gt;
-            </span>
-          </h2>
-          <p className={`m-0 max-w-[30ch] text-sm opacity-50`}>
-            Instantly deploy your Next.js site to a shareable URL with Vercel.
-          </p>
-        </a>
+      <p>Lorem ipsum dolor sit amet consectetur adipisicing elit. Quisquam, nulla!</p>
+      <p>-Person</p>
+    </div>
+    <div className="bg-white rounded-lg shadow p-4">
+      <div className="flex items-center mb-2">
+        <span className="text-yellow-400 text-2xl mr-1">⭐</span>
+        <span className="text-yellow-400 text-2xl mr-1">⭐</span>
+        <span className="text-yellow-400 text-2xl mr-1">⭐</span>
       </div>
-    </main>
-  )
-}
+      <p>Lorem ipsum dolor sit amet consectetur adipisicing elit. Quisquam, nulla!</p>
+      <p>-Person</p>
+    </div>
+    <div className="bg-white rounded-lg shadow p-4">
+      <div className="flex items-center mb-2">
+        <span className="text-yellow-400 text-2xl mr-1">⭐</span>
+        <span className="text-yellow-400 text-2xl mr-1">⭐</span>
+        <span className="text-yellow-400 text-2xl mr-1">⭐</span>
+        <span className="text-yellow-400 text-2xl mr-1">⭐</span>
+      </div>
+      <p>Lorem ipsum dolor sit amet consectetur adipisicing elit. Quisquam, nulla!</p>
+      <p>-Person</p>
+    </div>
+    {/* Repeat the above card for each testimonial */}
+  </div>
+</section>
+      </main>
+
+      <footer>
+        {/* Add your site footer */}
+      </footer>
+    </div>
+  );
+};
+
+export default App;
